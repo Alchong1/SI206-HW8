@@ -150,7 +150,7 @@ def get_highest_rating(db): #Do this through DB as well
     ax2.set_title("Average Restaurant Ratings by Building")
 
     plt.show()
-    return [(categories[-1], avg_ratings[-1]),(buildings[-1], avg_b[-1])]
+    return [(categories[-1], avg_ratings[-1]),(int(buildings[-1]), avg_b[-1])]
 
 #Try calling your functions here
 def main():
