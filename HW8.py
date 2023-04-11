@@ -51,17 +51,18 @@ def plot_rest_categories(db):
         "FROM restaurants R, categories C "
         "WHERE R.category_id = C.id "
         "GROUP BY C.category "
+        "ORDER BY COUNT(C.category) DESC "
     )
     for row in cur:
         categories[row[0]] = int(row[1])
 
     names = []
     counts = []
-    sorted_cat = sorted(categories.items(), key=lambda x:x[1])
     for category, count in categories.items():
         names.append(category)
         counts.append(count)
-    plt.bar(counts, names, color="blue")
+    plt.style.use("ggplot")
+    plt.barh(names, counts, color="blue")
     plt.xlabel("Number of Restaurants")
     plt.ylabel("Restaurant Categories")
     plt.title("Types of Restaurant on South University Ave")
@@ -83,7 +84,7 @@ def find_rest_in_building(building_num, db):
         "SELECT R.name "
         "FROM restaurants R, buildings B "
         "WHERE R.building_id = B.id "
-        "AND B.id = ? "
+        "AND B.building = ? "
         "ORDER BY R.rating DESC ",
         (building_num, )
     )
@@ -103,7 +104,53 @@ def get_highest_rating(db): #Do this through DB as well
     The second bar chart displays the buildings along the y-axis and their ratings along the x-axis 
     in descending order (by rating).
     """
-    pass
+    path = os.path.dirname(os.path.abspath(__file__))
+    conn = sqlite3.connect(path+'/'+db)
+    cur = conn.cursor()
+
+    cur.execute(
+        "SELECT C.category, AVG(R.rating) "
+        "FROM restaurants R, categories C "
+        "WHERE R.category_id = C.id "
+        "GROUP BY C.category "
+        "ORDER BY AVG(R.rating) "
+    )
+    categories = []
+    avg_ratings = []
+    for row in cur:
+        categories.append(row[0])
+        avg_ratings.append(row[1])
+    
+    cur.execute(
+        "SELECT B.building, AVG(R.rating) "
+        "FROM restaurants R, buildings B "
+        "WHERE R.building_id = B.id "
+        "GROUP BY B.building "
+        "ORDER BY AVG(R.rating) "
+    )
+
+    buildings = []
+    avg_b = []
+    for row in cur:
+        buildings.append(str(row[0]))
+        avg_b.append(row[1])
+
+    fig = plt.figure(figsize=(8,8))
+    ax1 = fig.add_subplot(211)
+    ax2 = fig.add_subplot(212)
+
+    ax1.barh(categories, avg_ratings, color="blue")
+    ax1.set_ylabel("Categories")
+    ax1.set_xlabel("Ratings")
+    ax1.set_title("Average Restaurant Ratings by Category")
+
+    ax2.barh(buildings, avg_b, color="blue")
+    ax2.set_ylabel("Buildings")
+    ax2.set_xlabel("Ratings")
+    ax2.set_title("Average Restaurant Ratings by Building")
+
+    plt.show()
+    return [(categories[-1], avg_ratings[-1]),(buildings[-1], avg_b[-1])]
 
 #Try calling your functions here
 def main():
